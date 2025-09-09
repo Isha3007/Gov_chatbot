@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Subtle tricolor top border */
+.tricolor-bar {
+background: linear-gradient(90deg, #FF9933 0%, #ffffff 50%, #138808 100%);
+}
+
+
+/* Chat scrollbar */
+.chat-scroll::-webkit-scrollbar { width: 8px; }
+.chat-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 8px; }
