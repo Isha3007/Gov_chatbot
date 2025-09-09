@@ -33,29 +33,30 @@ def query_rag(query_text: str):
     embedding_function = get_embedding_function()
     db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
 
-
     # Top-k retrieval
     results = db.similarity_search_with_score(query_text, k=5)
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _ in results])
 
-
+    # Prepare prompt
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     prompt = prompt_template.format(context=context_text, question=query_text)
 
-
-    # LLM choice (default: Gemini). Make sure GOOGLE_API_KEY is set in .env
+    # LLM choice (default: Gemini)
     model = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
-    # model = OllamaLLM(model="mistral")
-
-
     response = model.invoke(prompt)
     answer = response.content if hasattr(response, "content") else str(response)
 
-
-    sources = []
+    # Extract distinct, normalized sources
+    sources_set = set()
     for doc, _score in results:
-        chunk_id = doc.metadata.get("id", "")
         source_path = doc.metadata.get("source", "")
-        filename = os.path.basename(source_path)
-        sources.append(filename)
+        if source_path.startswith("http"):
+            # For websites, remove query parameters
+            clean_source = source_path.split("?")[0]
+        else:
+            # For PDFs, just keep the filename
+            clean_source = os.path.basename(source_path)
+        sources_set.add(clean_source)
+
+    sources = list(sources_set)
     return answer, sources
